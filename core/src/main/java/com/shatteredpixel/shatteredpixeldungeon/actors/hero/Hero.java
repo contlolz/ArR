@@ -62,6 +62,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Healing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HoldFast;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LeadBuff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LeadBuffCooldown;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Momentum;
@@ -104,6 +106,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.EtherealChains;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Sheath;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
@@ -866,6 +869,10 @@ public class Hero extends Char {
 			speed *= (1 - hero.pointsInTalent(Talent.PLATE_ADD)/8f);
 		}
 
+		if (hero.buff(LeadBuff.class) != null) {
+			speed *= 0.5f;
+		}
+
 		if (hero.subClass == HeroSubClass.RANGER) {
 			if (hero.belongings.weapon instanceof CrudePistol
 			 || hero.belongings.weapon instanceof CrudePistolAP
@@ -954,6 +961,14 @@ public class Hero extends Char {
 	public float attackDelay() {
 		if (buff(Talent.LethalMomentumTracker.class) != null){
 			buff(Talent.LethalMomentumTracker.class).detach();
+			return 0;
+		}
+
+		if (buff(LeadBuff.class) != null) {
+			buff(LeadBuff.class).detach();
+			if (hero.buff(ArtifactRecharge.class) == null) {
+				Buff.prolong(this, LeadBuffCooldown.class, 5f);
+			}
 			return 0;
 		}
 
@@ -1886,6 +1901,9 @@ public class Hero extends Char {
 
 		EtherealChains.chainsRecharge chains = buff(EtherealChains.chainsRecharge.class);
 		if (chains != null) chains.gainExp(percent);
+
+		Sheath.sheathUpgrade sheathUpgrade = buff(Sheath.sheathUpgrade.class);
+		if (sheathUpgrade != null) sheathUpgrade.gainExp(percent);
 
 		HornOfPlenty.hornRecharge horn = buff(HornOfPlenty.hornRecharge.class);
 		if (horn != null) horn.gainCharge(percent);
